@@ -20,6 +20,10 @@ const routes: Routes = [
         loadChildren: () => import('../navigate/navigate.module').then(m => m.NavigatePageModule)
       },
       {
+        path: 'settings',
+        loadChildren: () => import('../settings/settings.module').then(m => m.SettingsPageModule)
+      },
+      {
         path: '',
         redirectTo: '/tabs/connect',
         pathMatch: 'full'
