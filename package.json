@@ -2,6 +2,7 @@
   "dependencies": {
     "@ionic-native/hotspot": "^5.36.0",
     "ngx-joystick": "^4.0.3",
-    "ngx-socket-io": "^4.8.1"
+    "ngx-socket-io": "^4.5.0",
+    "rxjs": "^6.6.7"
   }
 }
