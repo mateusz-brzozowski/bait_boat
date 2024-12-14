@@ -12,6 +12,9 @@
       <ion-title size="large">Connect</ion-title>
     </ion-toolbar>
   </ion-header>
-
-  <app-explore-container name="Connect page"></app-explore-container>
+  <div class="center-container">
+    <img src="assets/logo.png" alt="Logo" class="logo">
+    <ion-button class="button" [disabled]="isConnecting" (click)="connectToHotspot()">Connect to Boat</ion-button>
+    <ion-button class="button" fill="outline" [disabled]="isTesting" (click)="testConnection()">Test Connection</ion-button>
+  </div>
 </ion-content>
