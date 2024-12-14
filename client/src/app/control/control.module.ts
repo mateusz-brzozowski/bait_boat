@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ControlPage } from './control.page';
 import { ExploreContainerComponentModule } from '../explore-container/explore-container.module';
+import { NgxJoystickModule } from 'ngx-joystick';
 
 import { ControlPageRoutingModule } from './control-routing.module';
 
@@ -13,7 +14,8 @@ import { ControlPageRoutingModule } from './control-routing.module';
     CommonModule,
     FormsModule,
     ExploreContainerComponentModule,
-    ControlPageRoutingModule
+    ControlPageRoutingModule,
+    NgxJoystickModule
   ],
   declarations: [ControlPage]
 })

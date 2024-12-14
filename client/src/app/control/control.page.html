@@ -12,6 +12,6 @@
       <ion-title size="large">Control</ion-title>
     </ion-toolbar>
   </ion-header>
-
-  <app-explore-container name="Control page"></app-explore-container>
+  <ngx-joystick [options]="staticOptions" (move)="onMove($event)" (end)="onEnd()"></ngx-joystick>
+  <ion-button expand="full" color="danger" (click)="emergencyStop()">Emergency Stop</ion-button>
 </ion-content>

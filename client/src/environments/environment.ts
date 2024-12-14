@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  socketUrl: 'http://192.168.8.45:5000',
+  socketUrl: 'http://localhost:5000',
   serverSSID: 'RaspberryPiSSID',
   serverPassword: 'password'
 };
