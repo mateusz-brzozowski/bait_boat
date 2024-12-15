@@ -23,7 +23,9 @@ export class NavigatePage implements OnInit {
   private markers: L.Marker[] = [];
   private markersGroup: L.LayerGroup = L.layerGroup();
   private linesGroup: L.LayerGroup = L.layerGroup();
+  private boatLayer: L.LayerGroup = L.layerGroup();
   private isNavigating: boolean = false;
+  private boatMarker: L.Marker = L.marker([0, 0]);
 
   ngOnInit() {
     this.websocketService.listenForEvent('message').subscribe((response: any) => {
@@ -147,6 +149,50 @@ export class NavigatePage implements OnInit {
     }
   }
 
+  private async addBoatMarker() {
+    const position = await this.getBoatPosition();
+    this.boatLayer.clearLayers();
+  
+    const pulsatingDotIcon = L.divIcon({
+      className: 'custom-div-icon',
+      html: `<div style="position: relative; width: 20px; height: 20px;">
+               <div style="width: 20px; height: 20px; background: radial-gradient(circle, rgba(255,0,0,1) 0%, rgba(255,0,0,0.6) 40%, rgba(255,0,0,0) 70%); border-radius: 50%; box-shadow: 0 0 6px rgba(255,0,0,0.6); animation: pulsate 1.5s infinite;"></div>
+               <style>
+                 @keyframes pulsate {
+                   0% { transform: scale(0.8); opacity: 0.7; }
+                   50% { transform: scale(1.2); opacity: 1; }
+                   100% { transform: scale(0.8); opacity: 0.7; }
+                 }
+                 .custom-div-icon div {
+                   width: 20px;
+                   height: 20px;
+                   background: radial-gradient(circle, rgba(255,0,0,1) 0%, rgba(255,0,0,0.6) 40%, rgba(255,0,0,0) 70%);
+                   border-radius: 50%;
+                   box-shadow: 0 0 6px rgba(255,0,0,0.6);
+                   animation: pulsate 1.5s infinite;
+                 }
+               </style>
+             </div>`,
+      iconSize: [20, 20]
+    });
+  
+    this.boatMarker = L.marker([position.lat, position.lng], { icon: pulsatingDotIcon }).addTo(this.boatLayer);
+  }
+  
+  private async updateBoatMarker() {
+    const position = await this.getBoatPosition();
+    if (this.boatMarker) {
+      this.boatMarker.setLatLng([position.lat, position.lng]);
+    }
+  }
+
+  private getBoatPosition(): Promise<{ lat: number, lng: number }> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ lat: 50.705548, lng: 22.192485 });
+      }, 1000);
+    });
+  }
 
   private initMap(): void {
     this.leafletMap = new L.Map('leafletMap');
@@ -175,6 +221,7 @@ export class NavigatePage implements OnInit {
     this.linesGroup = L.layerGroup();
     this.leafletMap.addLayer(this.markersGroup);
     this.leafletMap.addLayer(this.linesGroup);
+    this.leafletMap.addLayer(this.boatLayer);
     
     const baseMaps = {
       "Base Map": baseLayer,
@@ -182,6 +229,8 @@ export class NavigatePage implements OnInit {
     };
     
     L.control.layers(baseMaps).addTo(this.leafletMap);
+
+    this.addBoatMarker();
 
     this.leafletMap.on('click', (e: any) => {
       if (this.markers.length < MARKERS_MAX && !this.isNavigating) {
@@ -204,6 +253,10 @@ export class NavigatePage implements OnInit {
         geocoderButton.style.color = 'black';
       }
     }, 500);
+
+    setInterval(() => {
+      this.updateBoatMarker();
+    }, 5000);
   }
 
   private async showToast(message: string, color: string) {
