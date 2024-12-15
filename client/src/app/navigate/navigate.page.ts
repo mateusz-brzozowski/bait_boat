@@ -157,18 +157,31 @@ export class NavigatePage implements OnInit {
         self.leafletMap.invalidateSize();
       }, 10);
     });
-
+    
     this.leafletMap.setView([this.lat, this.lng], this.zoom);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href=”https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(this.leafletMap);
-
+    
+    const baseLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    });
+    
+    const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      attribution: '&copy; Esri, TomTom, Garmin, METI/NASA, USGS'
+    });
+  
+    baseLayer.addTo(this.leafletMap);
+    
     var MARKERS_MAX = 99;
     this.markersGroup = L.layerGroup();
     this.linesGroup = L.layerGroup();
     this.leafletMap.addLayer(this.markersGroup);
     this.leafletMap.addLayer(this.linesGroup);
+    
+    const baseMaps = {
+      "Base Map": baseLayer,
+      "Satellite": satelliteLayer
+    };
+    
+    L.control.layers(baseMaps).addTo(this.leafletMap);
 
     this.leafletMap.on('click', (e: any) => {
       if (this.markers.length < MARKERS_MAX && !this.isNavigating) {
