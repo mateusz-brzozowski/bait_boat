@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { WebsocketService } from '../services/websocket.service';
 
 @Component({
   selector: 'app-explore-container',
@@ -6,7 +7,14 @@ import { Component, Input } from '@angular/core';
   styleUrls: ['./explore-container.component.scss'],
 })
 export class ExploreContainerComponent {
+  @Input() name?: string; 
+  isConnected: boolean = false;
 
-  @Input() name?: string;
+  constructor(private websocketService: WebsocketService) {}
 
+  ngOnInit() {
+    this.websocketService.isConnected$.subscribe(isConnected => {
+      this.isConnected = isConnected;
+    });
+  }
 }

@@ -1,7 +1,7 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>
-      Navigate
+      <app-explore-container name="Navigate"></app-explore-container>
     </ion-title>
   </ion-toolbar>
 </ion-header>
@@ -21,4 +21,5 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
   <div id="leafletMap"></div>
+  <ion-button class="emergency-button" expand="full" color="danger" (click)="emergencyStop()">Emergency Stop</ion-button>
 </ion-content>

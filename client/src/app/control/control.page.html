@@ -1,7 +1,7 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>
-      Control
+      <app-explore-container name="Control"></app-explore-container>
     </ion-title>
   </ion-toolbar>
 </ion-header>
@@ -13,5 +13,5 @@
     </ion-toolbar>
   </ion-header>
   <ngx-joystick [options]="staticOptions" (move)="onMove($event)" (end)="onEnd()"></ngx-joystick>
-  <ion-button expand="full" color="danger" (click)="emergencyStop()">Emergency Stop</ion-button>
+  <ion-button class="emergency-button" expand="full" color="danger" (click)="emergencyStop()">Emergency Stop</ion-button>
 </ion-content>

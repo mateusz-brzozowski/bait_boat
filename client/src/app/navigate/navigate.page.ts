@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { WebsocketService } from '../services/websocket.service';
+import { ToastController } from '@ionic/angular';
 import * as L from 'leaflet';
 import 'leaflet-control-geocoder';
 
@@ -19,11 +21,25 @@ export class NavigatePage implements OnInit {
   lng: number = 22.192485;
   zoom: number = 18;
 
-  constructor() { }
-
   ngOnInit() {
+    this.websocketService.listenForEvent('message').subscribe((response: any) => {
+      if (response.error) {
+        console.log('Message from server:', response);
+        this.showToast(response.error, 'warning');
+      }
+    });
     this.initMap();
   }
+
+  constructor(private websocketService: WebsocketService,
+    private toastController: ToastController
+  ) {}
+
+  emergencyStop() {
+    console.log('Motors emergency stop');
+    this.websocketService.sendEvent('motors_emergency_stop');
+  }
+
 
   private initMap(): void {
     this.leafletMap = new L.Map('leafletMap');
@@ -97,5 +113,22 @@ export class NavigatePage implements OnInit {
         geocoderButton.style.color = 'black';
       }
     }, 500);
+  }
+
+  private async showToast(message: string, color: string) {
+    const toast = await this.toastController.create({
+      message: message,
+      duration: 2000,
+      color: color,
+      position: 'top',
+      positionAnchor: 'header',
+      buttons: [
+        {
+          text: 'Dismiss',
+          role: 'cancel'
+        }
+      ]
+    });
+    toast.present();
   }
 }
