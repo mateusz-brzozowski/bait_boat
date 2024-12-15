@@ -34,6 +34,11 @@ export class NavigatePage implements OnInit {
         this.showToast(response.error, 'warning');
       }
     });
+
+    this.websocketService.listenForEvent('boat_position').subscribe((response: any) => {
+      this.updateBoatMarker(response);
+    });
+
     this.initMap();
   }
 
@@ -179,8 +184,7 @@ export class NavigatePage implements OnInit {
     this.boatMarker = L.marker([position.lat, position.lng], { icon: pulsatingDotIcon }).addTo(this.boatLayer);
   }
   
-  private async updateBoatMarker() {
-    const position = await this.getBoatPosition();
+  private async updateBoatMarker(position: { lat: number, lng: number }) {
     if (this.boatMarker) {
       this.boatMarker.setLatLng([position.lat, position.lng]);
     }
@@ -253,10 +257,6 @@ export class NavigatePage implements OnInit {
         geocoderButton.style.color = 'black';
       }
     }, 500);
-
-    setInterval(() => {
-      this.updateBoatMarker();
-    }, 5000);
   }
 
   private async showToast(message: string, color: string) {
