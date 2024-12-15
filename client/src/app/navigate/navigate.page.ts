@@ -16,10 +16,14 @@ declare module 'leaflet' {
   styleUrls: ['navigate.page.scss']
 })
 export class NavigatePage implements OnInit {
-  leafletMap: any;
-  lat: number = 50.705548;
-  lng: number = 22.192485;
-  zoom: number = 18;
+  private leafletMap: any;
+  private lat: number = 50.705548;
+  private lng: number = 22.192485;
+  private zoom: number = 18;
+  private markers: L.Marker[] = [];
+  private markersGroup: L.LayerGroup = L.layerGroup();
+  private linesGroup: L.LayerGroup = L.layerGroup();
+  private isNavigating: boolean = false;
 
   ngOnInit() {
     this.websocketService.listenForEvent('message').subscribe((response: any) => {
@@ -33,11 +37,114 @@ export class NavigatePage implements OnInit {
 
   constructor(private websocketService: WebsocketService,
     private toastController: ToastController
-  ) {}
+  ) { }
 
   emergencyStop() {
     console.log('Motors emergency stop');
     this.websocketService.sendEvent('motors_emergency_stop');
+
+    if (this.isNavigating) {
+      this.pauseNavigation();
+      return;
+    }
+  }
+
+  removeMarkers() {
+    this.markers.forEach(marker => {
+      this.leafletMap.removeLayer(marker);
+    });
+    this.markersGroup.clearLayers();
+    this.linesGroup.clearLayers();
+    this.markers = [];
+  }
+
+  start() {
+    if (this.isNavigating) {
+      this.pauseNavigation();
+      return;
+    }
+
+    if (this.markers.length < 2) {
+      this.showToast('Please add at least two markers', 'warning');
+      return;
+    }
+
+    const waypoints = this.markers.map(marker => {
+      return {
+        lat: marker.getLatLng().lat,
+        lng: marker.getLatLng().lng
+      };
+    });
+
+    console.log('Waypoints:', waypoints);
+    this.websocketService.sendEvent('navigate', { waypoints });
+    this.isNavigating = true;
+    this.updateButtonIcon();
+    this.updateTrashButtonState();
+  }
+
+  private pauseNavigation() {
+    this.websocketService.sendEvent('pause', {});
+    this.isNavigating = false;
+    this.updateButtonIcon();
+    this.updateTrashButtonState();
+  }
+
+  private updateButtonIcon() {
+    const button = document.getElementById('startPauseButton');
+    if (button) {
+      const icon = button.querySelector('ion-icon');
+      if (icon) {
+        if (this.isNavigating) {
+          icon.setAttribute('name', 'pause');
+        } else {
+          icon.setAttribute('name', 'play');
+        }
+      } else {
+        console.error('Icon element not found');
+      }
+    } else {
+      console.error('Button element not found');
+    }
+  }
+
+  private updateTrashButtonState() {
+    const trashButton = document.getElementById('trashButton');
+    if (trashButton) {
+      if (this.isNavigating) {
+        trashButton.setAttribute('disabled', 'true');
+      } else {
+        trashButton.removeAttribute('disabled');
+      }
+    } else {
+      console.error('Trash button element not found');
+    }
+  }
+
+  private addMarker(lat: number, lng: number) {
+    const marker = L.marker([lat, lng], { icon: this.createNumberedIcon(this.markers.length + 1) }).addTo(this.leafletMap);
+    this.markers.push(marker);
+  }
+
+  private createNumberedIcon(number: number) {
+    return L.divIcon({
+      className: 'custom-div-icon',
+      html: `<div style="position: relative;">
+               <img src="https://brandeps.com/icon-download/M/Map-pin-icon-05.png" style="width: 28px; height: 28px;">
+               <div style="position: absolute; top: -5px; left: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: white;">${number}</div>
+             </div>`,
+      iconSize: [28, 28]
+    });
+  }
+
+  private drawArrows() {
+    this.linesGroup.clearLayers();
+    if (this.markers.length < 2) return;
+
+    for (let i = 0; i < this.markers.length - 1; i++) {
+      var latlngs = [this.markers[i].getLatLng(), this.markers[i + 1].getLatLng()];
+      L.polyline(latlngs, { color: 'blue' }).addTo(this.linesGroup);
+    }
   }
 
 
@@ -57,47 +164,18 @@ export class NavigatePage implements OnInit {
       attribution: '&copy; <a href=”https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(this.leafletMap);
 
-    var MARKERS_MAX = 4;
-    var markersGroup = L.layerGroup();
-    var linesGroup = L.layerGroup();
-    this.leafletMap.addLayer(markersGroup);
-    this.leafletMap.addLayer(linesGroup);
+    var MARKERS_MAX = 99;
+    this.markersGroup = L.layerGroup();
+    this.linesGroup = L.layerGroup();
+    this.leafletMap.addLayer(this.markersGroup);
+    this.leafletMap.addLayer(this.linesGroup);
 
-    var markers: L.Marker[] = [];
-
-    function createNumberedIcon(number: number) {
-      return L.divIcon({
-        className: 'custom-div-icon',
-        html: `<div style="position: relative;">
-                 <img src="https://brandeps.com/icon-download/M/Map-pin-icon-05.png" style="width: 28px; height: 28px;">
-                 <div style="position: absolute; top: -5px; left: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: white;">${number}</div>
-               </div>`,
-        iconSize: [28, 28]
-      });
-    }
-
-    const drawArrows = () =>  {
-      linesGroup.clearLayers();
-      if (markers.length < 2) return;
-    
-      for (let i = 0; i < markers.length - 1; i++) {
-        var latlngs = [markers[i].getLatLng(), markers[i + 1].getLatLng()];
-        L.polyline(latlngs, { color: 'blue' }).addTo(linesGroup);
-      }
-    }
-
-    this.leafletMap.on('click', function (e: any) {
-      var markersCount = markersGroup.getLayers().length;
-
-      if (markersCount < MARKERS_MAX) {
-        var marker = L.marker(e.latlng, { icon: createNumberedIcon(markersCount + 1) }).addTo(markersGroup);
-        markers.push(marker);
-        drawArrows();
+    this.leafletMap.on('click', (e: any) => {
+      if (this.markers.length < MARKERS_MAX && !this.isNavigating) {
+        this.addMarker(e.latlng.lat, e.latlng.lng);
+        this.drawArrows();
         return;
       }
-      markersGroup.clearLayers();
-      linesGroup.clearLayers();
-      markers = [];
     });
 
     const geocoder = L.Control.geocoder().addTo(this.leafletMap);

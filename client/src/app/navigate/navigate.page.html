@@ -21,5 +21,15 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
   <div id="leafletMap"></div>
-  <ion-button class="emergency-button" expand="full" color="danger" (click)="emergencyStop()">Emergency Stop</ion-button>
+  <div class="control-buttons">
+    <ion-button shape="round" id="trashButton" class="remove-button" color="secondary" (click)="removeMarkers()" size="large">
+      <ion-icon slot="icon-only" name="trash"></ion-icon>
+    </ion-button>
+    <ion-button shape="round" id="startPauseButton" class="start-pause-button" (click)="start()" size="large">
+      <ion-icon slot="icon-only" name="play"></ion-icon>
+    </ion-button>
+    <ion-button shape="round" class="emergency-button" color="danger" (click)="emergencyStop()" size="large">
+      <ion-icon slot="icon-only" name="stop"></ion-icon>
+    </ion-button>
+  </div>
 </ion-content>
