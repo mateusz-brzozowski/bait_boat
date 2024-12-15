@@ -135,7 +135,7 @@ export class NavigatePage implements OnInit {
 
   private createNumberedIcon(number: number) {
     return L.divIcon({
-      className: 'custom-div-icon',
+      className: 'numbered-div-icon',
       html: `<div style="position: relative;">
                <img src="https://brandeps.com/icon-download/M/Map-pin-icon-05.png" style="width: 28px; height: 28px;">
                <div style="position: absolute; top: -5px; left: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: white;">${number}</div>
@@ -144,22 +144,9 @@ export class NavigatePage implements OnInit {
     });
   }
 
-  private drawArrows() {
-    this.linesGroup.clearLayers();
-    if (this.markers.length < 2) return;
-
-    for (let i = 0; i < this.markers.length - 1; i++) {
-      var latlngs = [this.markers[i].getLatLng(), this.markers[i + 1].getLatLng()];
-      L.polyline(latlngs, { color: 'blue' }).addTo(this.linesGroup);
-    }
-  }
-
-  private async addBoatMarker() {
-    const position = await this.getBoatPosition();
-    this.boatLayer.clearLayers();
-  
-    const pulsatingDotIcon = L.divIcon({
-      className: 'custom-div-icon',
+  private createPulsatingDotIcon() {
+    return L.divIcon({
+      className: 'pulsating-div-icon',
       html: `<div style="position: relative; width: 20px; height: 20px;">
                <div style="width: 20px; height: 20px; background: radial-gradient(circle, rgba(255,0,0,1) 0%, rgba(255,0,0,0.6) 40%, rgba(255,0,0,0) 70%); border-radius: 50%; box-shadow: 0 0 6px rgba(255,0,0,0.6); animation: pulsate 1.5s infinite;"></div>
                <style>
@@ -180,10 +167,24 @@ export class NavigatePage implements OnInit {
              </div>`,
       iconSize: [20, 20]
     });
-  
-    this.boatMarker = L.marker([position.lat, position.lng], { icon: pulsatingDotIcon }).addTo(this.boatLayer);
   }
-  
+
+  private drawArrows() {
+    this.linesGroup.clearLayers();
+    if (this.markers.length < 2) return;
+
+    for (let i = 0; i < this.markers.length - 1; i++) {
+      var latlngs = [this.markers[i].getLatLng(), this.markers[i + 1].getLatLng()];
+      L.polyline(latlngs, { color: 'blue' }).addTo(this.linesGroup);
+    }
+  }
+
+  private async addBoatMarker() {
+    const position = await this.getBoatPosition();
+    this.boatLayer.clearLayers();
+    this.boatMarker = L.marker([position.lat, position.lng], { icon: this.createPulsatingDotIcon() }).addTo(this.boatLayer);
+  }
+
   private async updateBoatMarker(position: { lat: number, lng: number }) {
     if (this.boatMarker) {
       this.boatMarker.setLatLng([position.lat, position.lng]);
@@ -207,31 +208,31 @@ export class NavigatePage implements OnInit {
         self.leafletMap.invalidateSize();
       }, 10);
     });
-    
+
     this.leafletMap.setView([this.lat, this.lng], this.zoom);
-    
+
     const baseLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     });
-    
+
     const satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
       attribution: '&copy; Esri, TomTom, Garmin, METI/NASA, USGS'
     });
-  
+
     baseLayer.addTo(this.leafletMap);
-    
+
     var MARKERS_MAX = 99;
     this.markersGroup = L.layerGroup();
     this.linesGroup = L.layerGroup();
     this.leafletMap.addLayer(this.markersGroup);
     this.leafletMap.addLayer(this.linesGroup);
     this.leafletMap.addLayer(this.boatLayer);
-    
+
     const baseMaps = {
       "Base Map": baseLayer,
       "Satellite": satelliteLayer
     };
-    
+
     L.control.layers(baseMaps).addTo(this.leafletMap);
 
     this.addBoatMarker();
