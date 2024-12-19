@@ -1,0 +1,12 @@
+.center-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.speed-range {
+    width: 80%;
+    max-height: 50px;
+}
