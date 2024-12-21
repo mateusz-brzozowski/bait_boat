@@ -9,7 +9,8 @@ import { WebsocketService } from '../services/websocket.service';
 })
 export class SettingsPage implements OnInit {
   motorsSpeed: number = 0;
-  paletteToggle = false;
+  darkPaletteToggle = false;
+  highContrastPaletteToggle = false;
 
   ngOnInit() {
     this.websocketService.listenForEvent('message').subscribe((response: any) => {
@@ -20,8 +21,13 @@ export class SettingsPage implements OnInit {
     });
 
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const prefersHighContrast = window.matchMedia('(prefers-contrast: more)');
     this.initializeDarkPalette(prefersDark.matches);
+    this.initializeHighContrastPalette(prefersHighContrast.matches);
     prefersDark.addEventListener('change', (mediaQuery) => this.initializeDarkPalette(mediaQuery.matches));
+    prefersHighContrast.addEventListener('change', (mediaQuery) =>
+      this.initializeHighContrastPalette(mediaQuery.matches)
+    );
   }
 
   constructor(private toastController: ToastController,
@@ -36,16 +42,29 @@ export class SettingsPage implements OnInit {
   }
 
   initializeDarkPalette(isDark: boolean) {
-    this.paletteToggle = isDark;
+    this.darkPaletteToggle = isDark;
     this.toggleDarkPalette(isDark);
   }
 
-  toggleChange(ev: any) {
+  initializeHighContrastPalette(isHighContrast: boolean) {
+    this.highContrastPaletteToggle = isHighContrast;
+    this.toggleHighContrastPalette(isHighContrast);
+  }
+
+  darkPaletteToggleChange(ev: any) {
     this.toggleDarkPalette(ev.detail.checked);
+  }
+
+  highContrastPaletteToggleChange(ev: any) {
+    this.toggleHighContrastPalette(ev.detail.checked);
   }
 
   toggleDarkPalette(shouldAdd: boolean) {
     document.documentElement.classList.toggle('ion-palette-dark', shouldAdd);
+  }
+
+  toggleHighContrastPalette(shouldAdd: boolean) {
+    document.documentElement.classList.toggle('ion-palette-high-contrast', shouldAdd);
   }
 
   private async showToast(message: string, color: string) {

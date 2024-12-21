@@ -12,14 +12,20 @@
       <ion-title size="large">Settings</ion-title>
     </ion-toolbar>
   </ion-header>
-  <ion-content>
-    <ion-list-header>Appearance</ion-list-header>
+  <ion-content color="light">
+    <ion-list-header class="custom-list-header">Appearance</ion-list-header>
     <ion-list [inset]="true">
       <ion-item>
-        <ion-toggle [(ngModel)]="paletteToggle" (ionChange)="toggleChange($event)" justify="space-between">Dark Mode</ion-toggle>
+        <ion-toggle [(ngModel)]="darkPaletteToggle" (ionChange)="darkPaletteToggleChange($event)" justify="space-between">Dark Mode</ion-toggle>
+      </ion-item>
+      <ion-item>
+        <ion-toggle
+          [(ngModel)]="highContrastPaletteToggle"
+          (ionChange)="highContrastPaletteToggleChange($event)"
+          justify="space-between">High Contrast Mode</ion-toggle>
       </ion-item>
     </ion-list>
-    <ion-list-header>Motors Speed</ion-list-header>
+    <ion-list-header class="custom-list-header">Motors Speed</ion-list-header>
     <ion-list [inset]="true">
       <ion-item>
         <ion-range [ticks]="true" [snaps]="true" [min]="0" [max]="10" [(ngModel)]="motorsSpeed" (ionChange)="onSpeedChange()">
