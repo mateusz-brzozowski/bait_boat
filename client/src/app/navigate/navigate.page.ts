@@ -29,6 +29,7 @@ export class NavigatePage implements OnInit {
   private boatMarker: L.Marker = L.marker([0, 0]);
   private boatLat: number = 50.705548;
   private boatLng: number = 22.192485;
+  private currentWaypoint: number = 0;
 
   ngOnInit() {
     this.websocketService.listenForEvent('message').subscribe((response: any) => {
@@ -42,6 +43,10 @@ export class NavigatePage implements OnInit {
       this.updateBoatMarker(response);
     });
 
+    this.websocketService.listenForEvent('current_waypoint').subscribe((response: any) => {
+      this.updateCurrentWaypoint(response);
+    });
+
     this.initMap();
   }
 
@@ -52,10 +57,10 @@ export class NavigatePage implements OnInit {
   emergencyStop() {
     console.log('Motors emergency stop');
     this.websocketService.sendEvent('motors_emergency_stop');
+    this.currentWaypoint = 0;
 
     if (this.isNavigating) {
       this.pauseNavigation();
-      return;
     }
   }
 
@@ -93,10 +98,11 @@ export class NavigatePage implements OnInit {
     });
 
     console.log('Waypoints:', waypoints);
-    this.websocketService.sendEvent('navigate', { waypoints });
+    this.websocketService.sendEvent('navigate', { 'waypoints': waypoints, 'current_waypoint': this.currentWaypoint });
     this.isNavigating = true;
     this.updateButtonIcon();
     this.updateTrashButtonState();
+    this.updateCurrentWaypoint(this.currentWaypoint);
   }
 
   private pauseNavigation() {
@@ -104,6 +110,7 @@ export class NavigatePage implements OnInit {
     this.isNavigating = false;
     this.updateButtonIcon();
     this.updateTrashButtonState();
+    this.updateCurrentWaypoint();
   }
 
   private updateButtonIcon() {
@@ -138,18 +145,27 @@ export class NavigatePage implements OnInit {
   }
 
   private addMarker(lat: number, lng: number) {
-    const marker = L.marker([lat, lng], { icon: this.createNumberedIcon(this.markers.length + 1) }).addTo(this.leafletMap);
+    const marker = L.marker([lat, lng], { icon: this.createNumberedIcon(this.markers.length + 1, 28) }).addTo(this.leafletMap);
     this.markers.push(marker);
   }
 
-  private createNumberedIcon(number: number) {
+  private createNumberedIcon(number: number, size: number, shouldPulse: boolean = false) {
+    const pulseStyle = shouldPulse ? 'animation: pulsate 1.5s infinite;' : '';
+    const shadowStyle = shouldPulse ? 'filter: drop-shadow(0 0 10px var(--ion-color-primary));' : '';
     return L.divIcon({
       className: 'numbered-div-icon',
-      html: `<div style="position: relative;">
-               <img src="assets/marker.png" style="width: 28px; height: 28px;">
-               <div style="position: absolute; top: -5px; left: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: white;">${number}</div>
-             </div>`,
-      iconSize: [28, 28]
+      html: `<div style="position: relative; ${pulseStyle}">
+               <img src="assets/marker.png" style="width: ${size}px; height: ${size}px; ${shadowStyle}">
+               <div style="position: absolute; top: -5px; left: 0; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; color: white; font-size: ${size / 2}px;">${number}</div>
+             </div>
+             <style>
+                @keyframes pulsate {
+                  0% { transform: scale(0.9); opacity: 0.7; }
+                  50% { transform: scale(1.1); opacity: 1; }
+                  100% { transform: scale(0.9); opacity: 0.7; }
+                }
+             </style>`,
+      iconSize: [size, size]
     });
   }
 
@@ -199,6 +215,16 @@ export class NavigatePage implements OnInit {
     this.boatLng = position.lng;
     if (this.boatMarker) {
       this.boatMarker.setLatLng([position.lat, position.lng]);
+    }
+  }
+
+  private async updateCurrentWaypoint(waypoint?: number) {
+    if (this.currentWaypoint !== undefined) {
+      this.markers[this.currentWaypoint].setIcon(this.createNumberedIcon(this.currentWaypoint + 1, 28, false));
+    }
+    if(typeof waypoint !== 'undefined') {
+      this.currentWaypoint = waypoint;
+      this.markers[this.currentWaypoint].setIcon(this.createNumberedIcon(this.currentWaypoint + 1, 40, true));
     }
   }
 
