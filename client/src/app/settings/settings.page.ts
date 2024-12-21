@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { WebsocketService } from '../services/websocket.service';
+import { DarkModeService } from '../services/dark-mode.service';
 
 @Component({
   selector: 'app-settings',
@@ -22,6 +23,7 @@ export class SettingsPage implements OnInit {
 
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
     const prefersHighContrast = window.matchMedia('(prefers-contrast: more)');
+    this.initializeHighContrastPalette(prefersHighContrast.matches);
     prefersDark.addEventListener('change', (mediaQuery) => this.initializeDarkPalette(mediaQuery.matches));
     prefersHighContrast.addEventListener('change', (mediaQuery) =>
       this.initializeHighContrastPalette(mediaQuery.matches)
@@ -29,7 +31,8 @@ export class SettingsPage implements OnInit {
   }
 
   constructor(private toastController: ToastController,
-    private websocketService: WebsocketService) { }
+    private websocketService: WebsocketService,
+    private darkModeService: DarkModeService) { }
 
   pinFormatter(value: number) {
     return `${value*10}%`;
@@ -57,8 +60,9 @@ export class SettingsPage implements OnInit {
     this.toggleHighContrastPalette(ev.detail.checked);
   }
 
-  toggleDarkPalette(shouldAdd: boolean) {
-    document.documentElement.classList.toggle('ion-palette-dark', shouldAdd);
+  toggleDarkPalette(isDark: boolean) {
+    this.darkModeService.toggleDarkMode(isDark);
+    document.documentElement.classList.toggle('ion-palette-dark', isDark);
   }
 
   toggleHighContrastPalette(shouldAdd: boolean) {

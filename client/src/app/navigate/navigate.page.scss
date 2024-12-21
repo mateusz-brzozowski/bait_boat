@@ -10,6 +10,10 @@
     color: black !important;
 }
 
+.leaflet-dark-mode {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
 .control-buttons {
     position: fixed;
     display: flex;

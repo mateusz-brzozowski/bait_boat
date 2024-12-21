@@ -3,7 +3,7 @@ import { WebsocketService } from '../services/websocket.service';
 import { ToastController } from '@ionic/angular';
 import * as L from 'leaflet';
 import 'leaflet-control-geocoder';
-import { NumberSymbol } from '@angular/common';
+import { DarkModeService } from '../services/dark-mode.service';
 
 declare module 'leaflet' {
   namespace Control {
@@ -30,6 +30,7 @@ export class NavigatePage implements OnInit {
   private boatLat: number = 50.705548;
   private boatLng: number = 22.192485;
   private currentWaypoint: number = 0;
+  private isDark: boolean = false;
 
   ngOnInit() {
     this.websocketService.listenForEvent('message').subscribe((response: any) => {
@@ -47,18 +48,84 @@ export class NavigatePage implements OnInit {
       this.updateCurrentWaypoint(response);
     });
 
+    this.initMap();
+
+    this.darkModeService.darkMode$.subscribe((isDark) => {
+      this.initializeDarkPalette(isDark);
+      this.isDark = isDark;
+    });
+
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
     prefersDark.addEventListener('change', (mediaQuery) => this.initializeDarkPalette(mediaQuery.matches));
-
-    this.initMap();
   }
 
   constructor(private websocketService: WebsocketService,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private darkModeService: DarkModeService
   ) { }
 
   initializeDarkPalette(isDark: boolean) {
+    console.log('Dark palette:', isDark);
     document.documentElement.classList.toggle('ion-palette-dark', isDark);
+
+    const leafletElements = document.querySelectorAll('.leaflet-layer, .leaflet-control-zoom-in, .leaflet-control-zoom-out, .leaflet-control-attribution');
+    leafletElements.forEach((element) => {
+      const htmlElement = element as HTMLElement;
+      if (isDark) {
+        htmlElement.style.filter = 'invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%)';
+      } else {
+        htmlElement.style.filter = '';
+      }
+    });
+
+    const geocoderInput = document.querySelector('.leaflet-control-geocoder-form input') as HTMLElement;
+    if (geocoderInput) {
+      geocoderInput.style.color = isDark ? 'white' : 'black';
+      geocoderInput.style.backgroundColor = isDark ? '#333' : '#fff';
+    }
+
+    const geocoderButton = document.querySelector('.leaflet-control-geocoder-button') as HTMLElement;
+    if (geocoderButton) {
+      geocoderButton.style.color = isDark ? 'white' : 'black';
+      geocoderButton.style.backgroundColor = isDark ? '#333' : '#fff';
+    }
+
+    const geocoderControl = document.querySelector('.leaflet-control-geocoder') as HTMLElement;
+    if (geocoderControl) {
+      geocoderControl.style.backgroundColor = isDark ? '#333' : '#fff';
+      geocoderControl.style.color = isDark ? 'white' : 'black';
+    }
+
+    const geocoderResults = document.querySelector('.leaflet-control-geocoder-alternatives') as HTMLElement;
+    if (geocoderResults) {
+      geocoderResults.style.backgroundColor = isDark ? '#333' : '#fff';
+      geocoderResults.style.color = isDark ? 'white' : 'black';
+    }
+
+    const geocoderIcon = document.querySelector('.leaflet-control-geocoder-icon') as HTMLElement;
+    if (geocoderIcon) {
+      geocoderIcon.style.filter = isDark ? 'invert(100%)' : 'none';
+      geocoderIcon.style.backgroundColor = 'transparent';
+    }
+
+    const layerControl = document.querySelector('.leaflet-control-layers') as HTMLElement;
+    if (layerControl) {
+      layerControl.style.backgroundColor = isDark ? '#333' : '#fff';
+      layerControl.style.color = isDark ? 'white' : 'black';
+    }
+
+    const layerControlInputs = document.querySelectorAll('.leaflet-control-layers input') as NodeListOf<HTMLInputElement>;
+    layerControlInputs.forEach((input) => {
+      input.style.backgroundColor = isDark ? '#333' : '#fff';
+      input.style.color = isDark ? 'white' : 'black';
+    });
+
+    const layerControlLabels = document.querySelectorAll('.leaflet-control-layers label') as NodeListOf<HTMLLabelElement>;
+    layerControlLabels.forEach((label) => {
+      label.style.color = isDark ? 'white' : 'black';
+    });
+
+    this.updateMarkers(isDark);
   }
 
   emergencyStop() {
@@ -152,16 +219,29 @@ export class NavigatePage implements OnInit {
   }
 
   private addMarker(lat: number, lng: number) {
-    const marker = L.marker([lat, lng], { icon: this.createNumberedIcon(this.markers.length + 1, 28) }).addTo(this.leafletMap);
+    const marker = L.marker([lat, lng], { icon: this.createNumberedIcon(this.markers.length + 1, 28, this.isDark) }).addTo(this.leafletMap);
     this.markers.push(marker);
   }
 
-  private createNumberedIcon(number: number, size: number, shouldPulse: boolean = false) {
+  updateMarkers(isDark: boolean) {
+    this.markers.forEach((marker, index) => {
+      if (this.currentWaypoint === index && this.isNavigating) {
+        marker.setIcon(this.createNumberedIcon(index + 1, 40, isDark, true));
+      }
+      else {
+        marker.setIcon(this.createNumberedIcon(index + 1, 28, isDark));
+      }
+    });
+  }
+
+  private createNumberedIcon(number: number, size: number, isDark: boolean, shouldPulse: boolean = false) {
     const pulseStyle = shouldPulse ? 'animation: pulsate 1.5s infinite;' : '';
     const shadowStyle = shouldPulse ? 'filter: drop-shadow(0 0 10px var(--ion-color-primary));' : '';
+    const filterStyle = isDark ? 'filter: invert(100%);' : '';
+
     return L.divIcon({
       className: 'numbered-div-icon',
-      html: `<div style="position: relative; ${pulseStyle}">
+      html: `<div style="position: relative; ${pulseStyle} ${filterStyle}">
                <img src="assets/marker.png" style="width: ${size}px; height: ${size}px; ${shadowStyle}">
                <div style="position: absolute; top: -5px; left: 0; width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; color: white; font-size: ${size / 2}px;">${number}</div>
              </div>
@@ -227,11 +307,11 @@ export class NavigatePage implements OnInit {
 
   private async updateCurrentWaypoint(waypoint?: number) {
     if (this.currentWaypoint !== undefined) {
-      this.markers[this.currentWaypoint].setIcon(this.createNumberedIcon(this.currentWaypoint + 1, 28, false));
+      this.markers[this.currentWaypoint].setIcon(this.createNumberedIcon(this.currentWaypoint + 1, 28, this.isDark, false));
     }
     if(typeof waypoint !== 'undefined') {
       this.currentWaypoint = waypoint;
-      this.markers[this.currentWaypoint].setIcon(this.createNumberedIcon(this.currentWaypoint + 1, 40, true));
+      this.markers[this.currentWaypoint].setIcon(this.createNumberedIcon(this.currentWaypoint + 1, 40, this.isDark, true));
     }
   }
 
@@ -279,6 +359,10 @@ export class NavigatePage implements OnInit {
 
     L.control.layers(baseMaps).addTo(this.leafletMap);
 
+    this.leafletMap.on('baselayerchange', (e: any) => {
+      this.initializeDarkPalette(this.isDark);
+    });
+
     this.addBoatMarker();
 
     this.leafletMap.on('click', (e: any) => {
@@ -294,12 +378,12 @@ export class NavigatePage implements OnInit {
     setTimeout(() => {
       const geocoderInput = document.querySelector('.leaflet-control-geocoder-form input') as HTMLElement;
       if (geocoderInput) {
-        geocoderInput.style.color = 'black';
+        geocoderInput.style.color = this.isDark ? 'white' : 'black';
       }
 
       const geocoderButton = document.querySelector('.leaflet-control-geocoder-button') as HTMLElement;
       if (geocoderButton) {
-        geocoderButton.style.color = 'black';
+        geocoderButton.style.color = this.isDark ? 'white' : 'black';
       }
     }, 500);
   }
