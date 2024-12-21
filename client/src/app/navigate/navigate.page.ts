@@ -47,12 +47,19 @@ export class NavigatePage implements OnInit {
       this.updateCurrentWaypoint(response);
     });
 
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    prefersDark.addEventListener('change', (mediaQuery) => this.initializeDarkPalette(mediaQuery.matches));
+
     this.initMap();
   }
 
   constructor(private websocketService: WebsocketService,
     private toastController: ToastController
   ) { }
+
+  initializeDarkPalette(isDark: boolean) {
+    document.documentElement.classList.toggle('ion-palette-dark', isDark);
+  }
 
   emergencyStop() {
     console.log('Motors emergency stop');

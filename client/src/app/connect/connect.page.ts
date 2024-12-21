@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Hotspot } from '@ionic-native/hotspot/ngx';
 import { ToastController } from '@ionic/angular';
 import { environment } from '../../environments/environment';
@@ -13,11 +13,20 @@ export class ConnectPage {
   isConnecting: boolean = false;
   isTesting: boolean = false;
 
+  ngOnInit() {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    prefersDark.addEventListener('change', (mediaQuery) => this.initializeDarkPalette(mediaQuery.matches));
+  }
+
   constructor(
     private hotspot: Hotspot,
     private toastController: ToastController,
     private httpClient: HttpClient
   ) { }
+
+  initializeDarkPalette(isDark: boolean) {
+    document.documentElement.classList.toggle('ion-palette-dark', isDark);
+  }
 
   async connectToHotspot() {
     this.isConnecting = true;

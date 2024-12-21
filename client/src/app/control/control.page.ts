@@ -23,11 +23,18 @@ export class ControlPage implements OnInit {
         this.showToast(response.error, 'warning');
       }
     });
+
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    prefersDark.addEventListener('change', (mediaQuery) => this.initializeDarkPalette(mediaQuery.matches));
   }
 
   constructor(private websocketService: WebsocketService,
     private toastController: ToastController
   ) {}
+
+  initializeDarkPalette(isDark: boolean) {
+    document.documentElement.classList.toggle('ion-palette-dark', isDark);
+  }
 
   async onMove(event: JoystickEvent) {
     if (event.data.vector) {

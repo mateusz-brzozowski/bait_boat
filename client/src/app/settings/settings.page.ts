@@ -22,8 +22,6 @@ export class SettingsPage implements OnInit {
 
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
     const prefersHighContrast = window.matchMedia('(prefers-contrast: more)');
-    this.initializeDarkPalette(prefersDark.matches);
-    this.initializeHighContrastPalette(prefersHighContrast.matches);
     prefersDark.addEventListener('change', (mediaQuery) => this.initializeDarkPalette(mediaQuery.matches));
     prefersHighContrast.addEventListener('change', (mediaQuery) =>
       this.initializeHighContrastPalette(mediaQuery.matches)
