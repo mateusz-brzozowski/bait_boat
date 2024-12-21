@@ -22,6 +22,9 @@
   <script src="https://unpkg.com/leaflet-control-geocoder@3.0.0/dist/Control.Geocoder.js"></script>
   <div id="leafletMap"></div>
   <div class="control-buttons">
+    <ion-button shape="round" id="locateButton" class="locate-button" color="secondary" (click)="locate()" size="large">
+      <ion-icon slot="icon-only" name="locate"></ion-icon>
+    </ion-button>
     <ion-button shape="round" id="trashButton" class="remove-button" color="secondary" (click)="removeMarkers()" size="large">
       <ion-icon slot="icon-only" name="trash"></ion-icon>
     </ion-button>

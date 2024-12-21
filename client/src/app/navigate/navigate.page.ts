@@ -3,6 +3,7 @@ import { WebsocketService } from '../services/websocket.service';
 import { ToastController } from '@ionic/angular';
 import * as L from 'leaflet';
 import 'leaflet-control-geocoder';
+import { NumberSymbol } from '@angular/common';
 
 declare module 'leaflet' {
   namespace Control {
@@ -26,6 +27,8 @@ export class NavigatePage implements OnInit {
   private boatLayer: L.LayerGroup = L.layerGroup();
   private isNavigating: boolean = false;
   private boatMarker: L.Marker = L.marker([0, 0]);
+  private boatLat: number = 50.705548;
+  private boatLng: number = 22.192485;
 
   ngOnInit() {
     this.websocketService.listenForEvent('message').subscribe((response: any) => {
@@ -53,6 +56,12 @@ export class NavigatePage implements OnInit {
     if (this.isNavigating) {
       this.pauseNavigation();
       return;
+    }
+  }
+
+  locate() {
+    if (this.leafletMap) {
+      this.leafletMap.setView([this.boatLat, this.boatLng], this.leafletMap.getZoom());
     }
   }
 
@@ -137,7 +146,7 @@ export class NavigatePage implements OnInit {
     return L.divIcon({
       className: 'numbered-div-icon',
       html: `<div style="position: relative;">
-               <img src="https://brandeps.com/icon-download/M/Map-pin-icon-05.png" style="width: 28px; height: 28px;">
+               <img src="assets/marker.png" style="width: 28px; height: 28px;">
                <div style="position: absolute; top: -5px; left: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: white;">${number}</div>
              </div>`,
       iconSize: [28, 28]
@@ -186,6 +195,8 @@ export class NavigatePage implements OnInit {
   }
 
   private async updateBoatMarker(position: { lat: number, lng: number }) {
+    this.boatLat = position.lat;
+    this.boatLng = position.lng;
     if (this.boatMarker) {
       this.boatMarker.setLatLng([position.lat, position.lng]);
     }
