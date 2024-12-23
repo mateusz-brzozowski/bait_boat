@@ -116,6 +116,8 @@ class Motors:
         self._set_speeds(0, 0)
 
     def is_boat_submerged(self) -> bool:
+        if __debug__:
+            return
         return GPIO.input(self.water_sensor_pin) == GPIO.HIGH
 
     def start_keep_alive(self) -> None:
