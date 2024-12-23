@@ -180,7 +180,7 @@ export class NavigatePage implements OnInit {
   }
 
   private pauseNavigation() {
-    this.websocketService.sendEvent('pause', {});
+    this.websocketService.sendEvent('pause');
     this.isNavigating = false;
     this.updateButtonIcon();
     this.updateTrashButtonState();
