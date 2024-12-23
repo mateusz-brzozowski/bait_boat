@@ -82,6 +82,9 @@ class Motors:
     def _set_speeds(self, left_speed: int, right_speed: int) -> None:
         self._update_activity()
 
+        if __debug__:
+            return
+
         if left_speed >= 0:
             self.left_motor_forward_pwm.ChangeDutyCycle(left_speed)
             self.left_motor_backward_pwm.ChangeDutyCycle(0)
