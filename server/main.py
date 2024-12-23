@@ -5,14 +5,16 @@ from typing import Dict
 
 from gps import GPS
 from motors import Motors
+from navigation import Navigation
 
 import threading
 
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
-gps = GPS()
+gps = GPS(average_data=True)
 motors = Motors()
+navigation = Navigation(gps, motors)
 
 
 @app.route("/")
@@ -45,25 +47,44 @@ def handle_set_motors_speed(data: Dict[str, int]) -> None:
     send(data, broadcast=True)
 
 
-def send_gps_data() -> None:
+@socketio.on("navigate")
+def handle_navigate(data: Dict) -> None:
+    navigation.navigate(data["waypoints"], data["current_waypoint"])
+    print("Navigation Started")
+    send("Navigation Started", broadcast=True)
+
+
+@socketio.on("pause")
+def handle_pause() -> None:
+    navigation.pause()
+    print("Navigation Paused")
+    send("Navigation Paused", broadcast=True)
+
+
+def send_navigation_data() -> None:
     gps.start()
     while True:
         data = gps.get_data()
         socketio.emit("boat_position", data.get_struct(), namespace="/")
+        socketio.emit(
+            "current_waypoint",
+            navigation.get_current_waypoint(),
+            namespace="/",
+        )
         socketio.sleep(1)
 
 
 if __name__ == "__main__":
     try:
         motors.start_keep_alive()
-        gps_thread = threading.Thread(target=send_gps_data)
-        gps_thread.daemon = True
-        gps_thread.start()
+        navigation_thread = threading.Thread(target=send_navigation_data)
+        navigation_thread.daemon = True
+        navigation_thread.start()
         socketio.run(
             app, host="0.0.0.0", port=5000, allow_unsafe_werkzeug=True
         )
     finally:
-        gps_thread.join()
+        navigation_thread.join()
         gps.stop()
         motors.cleanup()
         motors.stop_keep_alive()
