@@ -15,7 +15,7 @@ class Navigation:
         self.simulation = simulation
         self.current_waypoint: int = 0
         self.waypoints: List[GPSData] = []
-        self.paused: bool = False
+        self.paused: bool = True
 
     def navigate(
         self, waypoints: List[GPSData], current_waypoint: int
@@ -24,7 +24,7 @@ class Navigation:
         self.current_waypoint = current_waypoint
         self.paused = False
 
-        if self.simulation:
+        if self.simulation and self.gps.get_data().Lat == 0:
             self.gps.set_position(
                 waypoints[current_waypoint].Lat + 0.0001,
                 waypoints[current_waypoint].Lon
@@ -49,16 +49,22 @@ class Navigation:
             self.motors.set_course(course["x"], course["y"])
             if self.simulation:
                 self.gps.set_position(
-                    current_position.Lat + course["x"] * 0.00002,
-                    current_position.Lon + course["y"] * 0.00002,
+                    current_position.Lat + course["x"] * 0.00004,
+                    current_position.Lon + course["y"] * 0.00004,
                 )
             time.sleep(1)
 
     def pause(self) -> None:
         self.paused = True
 
+    def is_paused(self) -> bool:
+        return self.paused
+
     def get_current_waypoint(self) -> int:
         return self.current_waypoint
+
+    def set_current_waypoint(self, current_waypoint) -> None:
+        self.current_waypoint = current_waypoint
 
     def _calculate_distance(
         self, position1: GPSData, position2: GPSData

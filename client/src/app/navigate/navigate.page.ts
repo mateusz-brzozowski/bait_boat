@@ -30,6 +30,7 @@ export class NavigatePage implements OnInit {
   private boatLat: number = 50.705548;
   private boatLng: number = 22.192485;
   private currentWaypoint: number = 0;
+  private lastWaypoint: number = -1;
   private isDark: boolean = false;
 
   ngOnInit() {
@@ -131,7 +132,10 @@ export class NavigatePage implements OnInit {
   emergencyStop() {
     console.log('Motors emergency stop');
     this.websocketService.sendEvent('motors_emergency_stop');
+    this.websocketService.sendEvent('current_waypoint', 0);
     this.currentWaypoint = 0;
+
+    this.stopAllWaypoints();
 
     if (this.isNavigating) {
       this.pauseNavigation();
@@ -176,7 +180,6 @@ export class NavigatePage implements OnInit {
     this.isNavigating = true;
     this.updateButtonIcon();
     this.updateTrashButtonState();
-    this.updateCurrentWaypoint(this.currentWaypoint);
   }
 
   private pauseNavigation() {
@@ -184,7 +187,7 @@ export class NavigatePage implements OnInit {
     this.isNavigating = false;
     this.updateButtonIcon();
     this.updateTrashButtonState();
-    this.updateCurrentWaypoint();
+    this.stopAllWaypoints();
   }
 
   private updateButtonIcon() {
@@ -305,14 +308,23 @@ export class NavigatePage implements OnInit {
     }
   }
 
-  private async updateCurrentWaypoint(waypoint?: number) {
-    if (this.currentWaypoint !== undefined) {
-      this.markers[this.currentWaypoint].setIcon(this.createNumberedIcon(this.currentWaypoint + 1, 28, this.isDark, false));
+  private async updateCurrentWaypoint(waypoint: number) {
+    this.currentWaypoint = waypoint;
+    console.log(this.currentWaypoint);
+    console.log(this.lastWaypoint);
+    if (this.currentWaypoint === this.lastWaypoint) {
+      return;
     }
-    if(typeof waypoint !== 'undefined') {
-      this.currentWaypoint = waypoint;
-      this.markers[this.currentWaypoint].setIcon(this.createNumberedIcon(this.currentWaypoint + 1, 40, this.isDark, true));
-    }
+    this.stopAllWaypoints();
+    this.lastWaypoint = this.currentWaypoint;
+    this.markers[this.currentWaypoint].setIcon(this.createNumberedIcon(this.currentWaypoint + 1, 40, this.isDark, true));
+  }
+
+  private async stopAllWaypoints() {
+    this.lastWaypoint = -1;
+    this.markers.forEach((_, index) => {
+      this.markers[index].setIcon(this.createNumberedIcon(index + 1, 28, this.isDark, false));
+    });
   }
 
   private getBoatPosition(): Promise<{ lat: number, lng: number }> {

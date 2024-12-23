@@ -35,7 +35,7 @@ def handle_joystick(data: Dict[str, float]) -> None:
 
 
 @socketio.on("motors_emergency_stop")
-def handle_motors_emergency_stop() -> None:
+def handle_motors_emergency_stop(data: None) -> None:
     motors.stop()
     print("Motors emergency Stop")
     send("Motors emergency Stop", broadcast=True)
@@ -61,10 +61,17 @@ def handle_navigate(data: Dict) -> None:
 
 
 @socketio.on("pause")
-def handle_pause() -> None:
+def handle_pause(data: None) -> None:
     navigation.pause()
     print("Navigation Paused")
     send("Navigation Paused", broadcast=True)
+
+
+@socketio.on("current_waypoint")
+def handle_current_waypoint(data: int) -> None:
+    navigation.set_current_waypoint(data)
+    print(f"Set Current Waypoint: {data}")
+    send(data, broadcast=True)
 
 
 def send_navigation_data() -> None:
@@ -72,13 +79,14 @@ def send_navigation_data() -> None:
     while True:
         data = gps.get_data()
         print(data.get_struct())
-        print(navigation.get_current_waypoint())
         socketio.emit("boat_position", data.get_struct(), namespace="/")
-        socketio.emit(
-            "current_waypoint",
-            navigation.get_current_waypoint(),
-            namespace="/",
-        )
+        if not navigation.is_paused():
+            print(navigation.get_current_waypoint())
+            socketio.emit(
+                "current_waypoint",
+                navigation.get_current_waypoint(),
+                namespace="/",
+            )
         time.sleep(1)
 
 
