@@ -1,6 +1,7 @@
 from typing import Dict
 
-import RPi.GPIO as GPIO
+if not __debug__:
+    import RPi.GPIO as GPIO
 import threading
 import time
 
@@ -12,6 +13,8 @@ class Motors:
         self.keep_alive: bool = True
         self.speed = 0.1
 
+        if __debug__:
+            return
         self.left_motor_forward_pin: int = 18
         self.left_motor_backward_pin: int = 17
         self.right_motor_forward_pin: int = 27
@@ -26,6 +29,8 @@ class Motors:
         self.setup()
 
     def setup(self) -> None:
+        if __debug__:
+            return
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.left_motor_forward_pin, GPIO.OUT)
         GPIO.setup(self.left_motor_backward_pin, GPIO.OUT)
@@ -58,6 +63,8 @@ class Motors:
             self.right_motor_backward_pwm.start(0)
 
     def cleanup(self) -> None:
+        if __debug__:
+            return
         if self.left_motor_forward_pwm is not None:
             self.left_motor_forward_pwm.stop()
 
