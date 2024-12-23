@@ -54,7 +54,8 @@ class GPS:
                     positions = []
                     start_time = time.time()
                     while time.time() - start_time < 1:
-                        positions.append(self._parse_data())
+                        if (data := self._parse_data()) is not None:
+                            positions.append(data)
                         time.sleep(0.1)
                     if positions:
                         lon = sum([pos.Lon for pos in positions]) / len(
