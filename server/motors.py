@@ -20,6 +20,8 @@ class Motors:
         self.right_motor_forward_pwm: GPIO.PWM = None
         self.right_motor_backward_pwm: GPIO.PWM = None
 
+        self.setup()
+
     def setup(self) -> None:
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.left_motor_forward_pin, GPIO.OUT)
