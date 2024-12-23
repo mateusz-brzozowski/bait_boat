@@ -13,7 +13,6 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 gps = GPS()
 motors = Motors()
-motors_speed = 0.1
 
 
 @app.route("/")
@@ -23,19 +22,10 @@ def index() -> str:
 
 @socketio.on("joystick")
 def handle_joystick(data: Dict[str, float]) -> None:
-    x = data["x"]
-    y = data["y"]
     try:
-        if motors.is_boat_submerged():
-            left_motor_speed = max(min(y - x, 1), -1) * 100 * motors_speed
-            right_motor_speed = max(min(y + x, 1), -1) * 100 * motors_speed
-            motors.set_speeds(left_motor_speed, right_motor_speed)
-            print("Joystick: " + str(data))
-            send(data, broadcast=True)
-        else:
-            motors.stop()
-            print("Boat is not submerged")
-            send({"error": "Boat is not submerged"}, broadcast=True)
+        message = motors.set_course(data["x"], data["y"])
+        print(message)
+        send(message, broadcast=True)
     except RuntimeError as e:
         print(e)
         send({"error": "Please setup motors first"}, broadcast=True)
@@ -50,9 +40,8 @@ def handle_motors_emergency_stop() -> None:
 
 @socketio.on("set_motors_speed")
 def handle_set_motors_speed(data: Dict[str, int]) -> None:
-    global motors_speed
-    motors_speed = data["speed"] / 10
-    print(f"Set Motors Speed: {motors_speed}")
+    motors.set_speed(data["speed"])
+    print(f"Set Motors Speed: {data['speed']}")
     send(data, broadcast=True)
 
 

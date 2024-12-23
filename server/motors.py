@@ -1,3 +1,5 @@
+from typing import Dict
+
 import RPi.GPIO as GPIO
 import threading
 import time
@@ -8,6 +10,7 @@ class Motors:
         self.timeout = timeout
         self.last_update: float = time.time()
         self.keep_alive: bool = True
+        self.speed = 0.1
 
         self.left_motor_forward_pin: int = 18
         self.left_motor_backward_pin: int = 17
@@ -69,7 +72,7 @@ class Motors:
 
         GPIO.cleanup()
 
-    def set_speeds(self, left_speed: int, right_speed: int) -> None:
+    def _set_speeds(self, left_speed: int, right_speed: int) -> None:
         self._update_activity()
 
         if left_speed >= 0:
@@ -86,8 +89,24 @@ class Motors:
             self.right_motor_forward_pwm.ChangeDutyCycle(0)
             self.right_motor_backward_pwm.ChangeDutyCycle(-right_speed)
 
+    def set_course(self, x: int, y: int) -> Dict[str, float]:
+        if self.is_boat_submerged():
+            left_motor_speed = max(min(y - x, 1), -1) * 100 * self.speed
+            right_motor_speed = max(min(y + x, 1), -1) * 100 * self.speed
+            self._set_speeds(left_motor_speed, right_motor_speed)
+            return {
+                "left_motor_speed": left_motor_speed,
+                "right_motor_speed": right_motor_speed,
+            }
+        else:
+            self.stop()
+            return {"error": "Boat is not submerged"}
+
+    def set_speed(self, speed: int) -> None:
+        self.speed = speed / 10
+
     def stop(self) -> None:
-        self.set_speeds(0, 0)
+        self._set_speeds(0, 0)
 
     def is_boat_submerged(self) -> bool:
         return GPIO.input(self.water_sensor_pin) == GPIO.HIGH
