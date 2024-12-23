@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Union
 
 import threading
 import time
@@ -71,7 +71,7 @@ class GPS:
                 print(f"Error reading GPS data: {e}")
                 time.sleep(1)
 
-    def _parse_data(self) -> GPSData | None:
+    def _parse_data(self) -> Union[GPSData, None]:
         line = self.serial.readline().decode("ascii", errors="replace")
         if line.startswith("$GNRMC"):
             data = line.split(",")
@@ -84,7 +84,7 @@ class GPS:
 
     def _convert_to_degrees(
         self, value: float, direction: chr
-    ) -> float | None:
+    ) -> Union[float, None]:
         if not value or not direction:
             return None
         degrees = int(value[:2]) if direction in ["N", "S"] else int(value[:3])

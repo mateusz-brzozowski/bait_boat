@@ -37,7 +37,7 @@ class Motors:
             self.left_motor_forward_pwm = GPIO.PWM(
                 self.left_motor_forward_pin, 100
             )
-            self.left_motor_backward_pwm.start(0)
+            self.left_motor_forward_pwm.start(0)
 
         if self.left_motor_backward_pwm is None:
             self.left_motor_backward_pwm = GPIO.PWM(
