@@ -1,7 +1,10 @@
 {
-  "name": "client",
+  "name": "Autonomous Boat",
   "integrations": {
     "capacitor": {}
   },
-  "type": "angular"
+  "type": "angular",
+  "server": {
+    "cleartext": true
+  }
 }
