@@ -27,8 +27,8 @@ def handle_joystick(data: Dict[str, float]) -> None:
     y = data["y"]
     try:
         if motors.is_boat_submerged():
-            left_motor_speed = max(min(y + x, 1), -1) * 100 * motors_speed
-            right_motor_speed = max(min(y - x, 1), -1) * 100 * motors_speed
+            left_motor_speed = max(min(y - x, 1), -1) * 100 * motors_speed
+            right_motor_speed = max(min(y + x, 1), -1) * 100 * motors_speed
             motors.set_speeds(left_motor_speed, right_motor_speed)
             print("Joystick: " + str(data))
             send(data, broadcast=True)
