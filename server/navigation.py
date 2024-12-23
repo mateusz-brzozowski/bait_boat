@@ -7,9 +7,12 @@ import math
 
 
 class Navigation:
-    def __init__(self, gps: GPS, motors: Motors) -> None:
+    def __init__(
+        self, gps: GPS, motors: Motors, simulation: bool = False
+    ) -> None:
         self.gps = gps
         self.motors = motors
+        self.simulation = simulation
         self.current_waypoint: int = 0
         self.waypoints: List[GPSData] = []
         self.paused: bool = False
@@ -21,6 +24,12 @@ class Navigation:
         self.current_waypoint = current_waypoint
         self.paused = False
 
+        if self.simulation:
+            self.gps.set_position(
+                waypoints[current_waypoint].Lat + 0.0001,
+                waypoints[current_waypoint].Lon
+            )
+
         while self.current_waypoint < len(self.waypoints):
             if self.paused:
                 return
@@ -29,7 +38,8 @@ class Navigation:
             distance = self._calculate_distance(
                 current_position, target_waypoint
             )
-            if distance < 2:
+            print(distance)
+            if distance < 10:
                 self.current_waypoint += 1
                 if self.current_waypoint >= len(self.waypoints):
                     self.motors.stop()
@@ -37,6 +47,11 @@ class Navigation:
 
             course = self._calculate_course(current_position, target_waypoint)
             self.motors.set_course(course["x"], course["y"])
+            if self.simulation:
+                self.gps.set_position(
+                    current_position.Lat + course["x"] * 0.00002,
+                    current_position.Lon + course["y"] * 0.00002,
+                )
             time.sleep(1)
 
     def pause(self) -> None:
@@ -66,8 +81,8 @@ class Navigation:
     def _calculate_course(
         self, current_position: GPSData, target_waypoint: GPSData
     ) -> Dict[str, float]:
-        delta_lat = target_waypoint.Lat - current_position.Lat
-        delta_lon = target_waypoint.Lon - current_position.Lon
+        delta_lat = target_waypoint.Lon - current_position.Lon
+        delta_lon = target_waypoint.Lat - current_position.Lat
 
         magnitude = math.sqrt(delta_lat**2 + delta_lon**2)
         x = delta_lon / magnitude

@@ -13,7 +13,7 @@ class GPSData:
     def get_struct(self) -> Dict[str, float]:
         return {
             "lat": self.Lat,
-            "lon": self.Lon,
+            "lng": self.Lon,
         }
 
 
@@ -23,29 +23,39 @@ class GPS:
         port: str = "/dev/ttyS0",
         baud_rate: int = 9600,
         average_data: bool = False,
+        simulation: bool = False,
     ) -> None:
         self.port = port
         self.baud_rate = baud_rate
         self.average_data = average_data
+        self.simulation = simulation
 
         self.data: GPSData = GPSData(0, 0)
-        self.serial: serial.Serial = serial.Serial(port, baud_rate, timeout=1)
-        self.running: bool = False
-        self.thread: threading.Thread = threading.Thread(
-            target=self._read_data
-        )
+        if not self.simulation:
+            self.serial: serial.Serial = serial.Serial(
+                port, baud_rate, timeout=1
+            )
+            self.running: bool = False
+            self.thread: threading.Thread = threading.Thread(
+                target=self._read_data
+            )
 
     def start(self) -> None:
-        self.running = True
-        self.thread.start()
+        if not self.simulation:
+            self.running = True
+            self.thread.start()
 
     def stop(self) -> None:
-        self.running = False
-        self.thread.join()
-        self.serial.close()
+        if not self.simulation:
+            self.running = False
+            self.thread.join()
+            self.serial.close()
 
     def get_data(self) -> GPSData:
         return self.data
+
+    def set_position(self, lat: float, lon: float) -> None:
+        self.data = GPSData(lat, lon)
 
     def _read_data(self) -> None:
         while self.running:

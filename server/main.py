@@ -8,13 +8,14 @@ from motors import Motors
 from navigation import Navigation
 
 import threading
+import time
 
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
-gps = GPS(average_data=True)
+gps = GPS(average_data=True, simulation=True)
 motors = Motors()
-navigation = Navigation(gps, motors)
+navigation = Navigation(gps, motors, simulation=True)
 
 
 @app.route("/")
@@ -53,6 +54,7 @@ def handle_navigate(data: Dict) -> None:
         GPSData(waypoint["lat"], waypoint["lng"])
         for waypoint in data["waypoints"]
     ]
+    print(data["waypoints"])
     navigation.navigate(data["waypoints"], data["current_waypoint"])
     print("Navigation Started")
     send("Navigation Started", broadcast=True)
@@ -69,13 +71,15 @@ def send_navigation_data() -> None:
     gps.start()
     while True:
         data = gps.get_data()
+        print(data.get_struct())
+        print(navigation.get_current_waypoint())
         socketio.emit("boat_position", data.get_struct(), namespace="/")
         socketio.emit(
             "current_waypoint",
             navigation.get_current_waypoint(),
             namespace="/",
         )
-        socketio.sleep(1)
+        time.sleep(1)
 
 
 if __name__ == "__main__":
