@@ -84,6 +84,9 @@ class Motors:
             self.right_motor_forward_pwm.ChangeDutyCycle(0)
             self.right_motor_backward_pwm.ChangeDutyCycle(-right_speed)
 
+    def stop(self) -> None:
+        self.set_speeds(0, 0)
+
     def is_boat_submerged(self) -> bool:
         return GPIO.input(self.water_sensor_pin) == GPIO.HIGH
 
@@ -103,5 +106,5 @@ class Motors:
     def _keep_alive(self) -> None:
         while self.keep_alive:
             if time.time() - self.last_update > self.timeout:
-                self.set_speeds(0, 0)
+                self.stop()
             time.sleep(1)
