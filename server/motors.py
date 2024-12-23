@@ -1,8 +1,14 @@
 import RPi.GPIO as GPIO
+import threading
+import time
 
 
 class Motors:
-    def __init__(self) -> None:
+    def __init__(self, timeout: int = 5) -> None:
+        self.timeout = timeout
+        self.last_update: float = time.time()
+        self.keep_alive: bool = True
+
         self.left_motor_forward_pin: int = 18
         self.left_motor_backward_pin: int = 17
         self.right_motor_forward_pin: int = 27
@@ -62,6 +68,8 @@ class Motors:
         GPIO.cleanup()
 
     def set_speeds(self, left_speed: int, right_speed: int) -> None:
+        self._update_activity()
+
         if left_speed >= 0:
             self.left_motor_forward_pwm.ChangeDutyCycle(left_speed)
             self.left_motor_backward_pwm.ChangeDutyCycle(0)
@@ -78,3 +86,22 @@ class Motors:
 
     def is_boat_submerged(self) -> bool:
         return GPIO.input(self.water_sensor_pin) == GPIO.HIGH
+
+    def start_keep_alive(self) -> None:
+        self.keep_alive = True
+        self._keep_alive_thread = threading.Thread(target=self._keep_alive)
+        self._keep_alive_thread.daemon = True
+        self._keep_alive_thread.start()
+
+    def stop_keep_alive(self) -> None:
+        self.keep_alive = False
+        self._keep_alive_thread.join()
+
+    def _update_activity(self) -> None:
+        self.last_update = time.time()
+
+    def _keep_alive(self) -> None:
+        while self.keep_alive:
+            if time.time() - self.last_update > self.timeout:
+                self.set_speeds(0, 0)
+            time.sleep(1)
