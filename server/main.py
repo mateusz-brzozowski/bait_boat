@@ -3,7 +3,7 @@ from flask_socketio import SocketIO, send
 from flask_cors import CORS
 from typing import Dict
 
-from gps import GPS
+from gps import GPS, GPSData
 from motors import Motors
 from navigation import Navigation
 
@@ -49,6 +49,10 @@ def handle_set_motors_speed(data: Dict[str, int]) -> None:
 
 @socketio.on("navigate")
 def handle_navigate(data: Dict) -> None:
+    data["waypoints"] = [
+        GPSData(waypoint["lat"], waypoint["lng"])
+        for waypoint in data["waypoints"]
+    ]
     navigation.navigate(data["waypoints"], data["current_waypoint"])
     print("Navigation Started")
     send("Navigation Started", broadcast=True)

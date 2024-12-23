@@ -6,14 +6,14 @@ import serial
 
 
 class GPSData:
-    def __init__(self, Lon: float, Lat: float) -> None:
-        self.Lon = Lon
+    def __init__(self, Lat: float, Lon: float) -> None:
         self.Lat = Lat
+        self.Lon = Lon
 
     def get_struct(self) -> Dict[str, float]:
         return {
-            "Lon": self.Lon,
-            "Lat": self.Lat,
+            "lat": self.Lat,
+            "lon": self.Lon,
         }
 
 
@@ -58,13 +58,13 @@ class GPS:
                             positions.append(data)
                         time.sleep(0.1)
                     if positions:
-                        lon = sum([pos.Lon for pos in positions]) / len(
-                            positions
-                        )
                         lat = sum([pos.Lat for pos in positions]) / len(
                             positions
                         )
-                        self.data = GPSData(lon, lat)
+                        lon = sum([pos.Lon for pos in positions]) / len(
+                            positions
+                        )
+                        self.data = GPSData(lat, lon)
                 else:
                     self.data = self._parse_data()
                     time.sleep(0.1)
@@ -79,7 +79,7 @@ class GPS:
             if data[2] == "A":
                 lat = self._convert_to_degrees(data[3], data[4])
                 lon = self._convert_to_degrees(data[5], data[6])
-                return GPSData(lon, lat)
+                return GPSData(lat, lon)
             else:
                 print("GPS data is not valid.")
 
