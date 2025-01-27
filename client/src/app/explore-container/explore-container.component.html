@@ -1,5 +1,7 @@
 <div class="container">
   <strong>{{ name }}</strong>
-  <ion-icon [name]="isConnected ? 'cloud-done-outline' : 'cloud-offline-outline'" [color]="isConnected ? 'success' : 'warning'" slot="icon-only"></ion-icon>
-  <ion-icon name="battery-charging" [color]="getBatteryIconColor()" slot="icon-only"></ion-icon>
+  <div class="status">
+    <ion-icon name="battery-charging" [color]="getBatteryIconColor()" slot="icon-only"></ion-icon>
+    <ion-icon [name]="isConnected ? 'cloud-done-outline' : 'cloud-offline-outline'" [color]="isConnected ? 'success' : 'warning'" slot="icon-only"></ion-icon>
+  </div>
 </div>
