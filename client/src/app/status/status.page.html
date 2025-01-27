@@ -1,0 +1,74 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>
+      <app-explore-container name="Status"></app-explore-container>
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Status</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-grid>
+    <ion-row>
+      <ion-col size="12">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Battery Level</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-progress-bar [value]="batteryLevel / 100" color="success"></ion-progress-bar>
+            <ion-text>{{ batteryLevel }}%</ion-text>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+      <ion-col size="12">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Estimated Time Remaining</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-text>{{ estimatedTime }}</ion-text>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+
+      <ion-col size="12">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Boat Speed</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-text>{{ boatSpeed }} km/h</ion-text>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+
+      <ion-col size="12">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Distance from User</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-text>{{ distanceFromUser }} meters</ion-text>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+
+      <ion-col size="12">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Boat Status</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-text>{{ boatStatus }}</ion-text>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

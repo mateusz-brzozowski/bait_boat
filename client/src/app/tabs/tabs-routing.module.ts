@@ -20,6 +20,10 @@ const routes: Routes = [
         loadChildren: () => import('../navigate/navigate.module').then(m => m.NavigatePageModule)
       },
       {
+        path: 'status',
+        loadChildren: () => import('../status/status.module').then(m => m.StatusPageModule)
+      },
+      {
         path: 'settings',
         loadChildren: () => import('../settings/settings.module').then(m => m.SettingsPageModule)
       },
