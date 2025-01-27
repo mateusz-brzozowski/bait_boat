@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { WebsocketService } from '../services/websocket.service';
 import { DarkModeService } from '../services/dark-mode.service';
+import { Storage } from '@ionic/storage-angular';
 
 @Component({
   selector: 'app-settings',
@@ -12,8 +13,10 @@ export class SettingsPage implements OnInit {
   motorsSpeed: number = 0;
   darkPaletteToggle = false;
   highContrastPaletteToggle = false;
+  boatSSID: string = '';
+  boatPassword: string = '';
 
-  ngOnInit() {
+  async ngOnInit() {
     this.websocketService.listenForEvent('message').subscribe((response: any) => {
       if (response.error) {
         console.log('Message from server:', response);
@@ -28,11 +31,23 @@ export class SettingsPage implements OnInit {
     prefersHighContrast.addEventListener('change', (mediaQuery) =>
       this.initializeHighContrastPalette(mediaQuery.matches)
     );
+
+    await this.storage.create();
+    this.boatSSID = (await this.storage.get('boatSSID')) || '';
+    this.boatPassword = (await this.storage.get('boatPassword')) || '';
   }
 
   constructor(private toastController: ToastController,
     private websocketService: WebsocketService,
-    private darkModeService: DarkModeService) { }
+    private darkModeService: DarkModeService,
+    private storage: Storage) { }
+
+
+  async saveSettings() {
+    await this.storage.set('boatSSID', this.boatSSID);
+    await this.storage.set('boatPassword', this.boatPassword);
+    this.showToast('Settings saved successfully', 'success');
+  }
 
   pinFormatter(value: number) {
     return `${value*10}%`;

@@ -34,5 +34,19 @@
         </ion-range>
       </ion-item>
     </ion-list>
+    <ion-list-header class="custom-list-header">WiFi</ion-list-header>
+    <ion-list [inset]="true">
+      <ion-item>
+        <ion-label position="stacked">SSID</ion-label>
+        <ion-input [(ngModel)]="boatSSID" placeholder="Enter Boat SSID" maxlength="32"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Password</ion-label>
+        <ion-input [(ngModel)]="boatPassword" type="password" placeholder="Enter Boat Password" maxlength="32"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-button class="button" expand="full" (click)="saveSettings()">Save</ion-button>
+      </ion-item>
+    </ion-list>
   </ion-content>
 </ion-content>
