@@ -1,0 +1,29 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Manage Routes</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="close()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <ion-item>
+      <ion-label position="stacked">New Route Name</ion-label>
+      <ion-input [(ngModel)]="newRouteName" placeholder="Enter Route Name"></ion-input>
+    </ion-item>
+    <ion-button expand="full" (click)="saveRoute()">Save Route</ion-button>
+  </ion-list>
+
+  <ion-list>
+    <ion-list-header>Saved Routes</ion-list-header>
+    <ion-item *ngFor="let route of routes">
+      <ion-label>{{ route.name }}</ion-label>
+      <ion-buttons slot="end">
+        <ion-button (click)="loadRoute(route)">Load</ion-button>
+        <ion-button color="danger" (click)="deleteRoute(route)">Delete</ion-button>
+      </ion-buttons>
+    </ion-item>
+  </ion-list>
+</ion-content>

@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { WebsocketService } from '../services/websocket.service';
-import { ToastController } from '@ionic/angular';
+import { ToastController, ModalController } from '@ionic/angular';
 import * as L from 'leaflet';
 import 'leaflet-control-geocoder';
 import { DarkModeService } from '../services/dark-mode.service';
+import { RoutesModalComponent } from '../routes-modal/routes-modal.component';
 
 declare module 'leaflet' {
   namespace Control {
@@ -62,8 +63,37 @@ export class NavigatePage implements OnInit {
 
   constructor(private websocketService: WebsocketService,
     private toastController: ToastController,
-    private darkModeService: DarkModeService
+    private darkModeService: DarkModeService,
+    private modalController: ModalController
   ) { }
+
+  async openRoutesModal() {
+    const waypoints = this.markers.map(marker => ({
+      lat: marker.getLatLng().lat,
+      lng: marker.getLatLng().lng
+    }));
+
+    const modal = await this.modalController.create({
+      component: RoutesModalComponent,
+      componentProps: { waypoints }
+    });
+
+    modal.onDidDismiss().then((detail) => {
+      if (detail.data) {
+        this.loadRoute(detail.data.waypoints);
+      }
+    });
+
+    return await modal.present();
+  }
+
+  private loadRoute(waypoints: any[]) {
+    this.removeMarkers();
+    waypoints.forEach(waypoint => {
+      this.addMarker(waypoint.lat, waypoint.lng);
+    });
+    this.drawArrows();
+  }
 
   initializeDarkPalette(isDark: boolean) {
     console.log('Dark palette:', isDark);
