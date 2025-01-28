@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { WebsocketService } from '../services/websocket.service';
 import { ToastController, ModalController } from '@ionic/angular';
 import * as L from 'leaflet';
+import 'leaflet-draw';
 import 'leaflet-control-geocoder';
 import { DarkModeService } from '../services/dark-mode.service';
 import { RoutesModalComponent } from '../routes-modal/routes-modal.component';
@@ -9,6 +10,14 @@ import { RoutesModalComponent } from '../routes-modal/routes-modal.component';
 declare module 'leaflet' {
   namespace Control {
     function geocoder(options?: any): any;
+    class Draw {
+      constructor(options?: any);
+    }
+  }
+  namespace Draw {
+    namespace Event {
+      const CREATED: string;
+    }
   }
 }
 
@@ -26,6 +35,8 @@ export class NavigatePage implements OnInit {
   private markersGroup: L.LayerGroup = L.layerGroup();
   private linesGroup: L.LayerGroup = L.layerGroup();
   private boatLayer: L.LayerGroup = L.layerGroup();
+  private geofenceLayer: L.FeatureGroup = L.featureGroup();
+  private geofence: L.Polygon | null = null;
   private isNavigating: boolean = false;
   private boatMarker: L.Marker = L.marker([0, 0]);
   private boatLat: number = 50.705548;
@@ -93,6 +104,54 @@ export class NavigatePage implements OnInit {
       this.addMarker(waypoint.lat, waypoint.lng);
     });
     this.drawArrows();
+  }
+
+  public drawGeofence() {
+    if (this.geofence) {
+      this.geofenceLayer.removeLayer(this.geofence);
+    }
+
+    const drawControl = new L.Control.Draw({
+      draw: {
+        polygon: true,
+        polyline: false,
+        rectangle: false,
+        circle: false,
+        marker: false,
+        circlemarker: false
+      },
+      edit: {
+        featureGroup: this.geofenceLayer
+      }
+    });
+
+    this.leafletMap.addControl(drawControl);
+
+    this.leafletMap.on(L.Draw.Event.CREATED, (event: any) => {
+      const layer = event.layer;
+      this.geofenceLayer.addLayer(layer);
+      this.geofence = layer;
+    });
+  }
+
+  private checkGeofence(lat: number, lng: number) {
+    if (this.geofence) {
+      const latlngs = this.geofence.getLatLngs() as L.LatLng[][]; // Rzutowanie na odpowiedni typ
+      let inside = false;
+
+      for (const latlngArray of latlngs) {
+        if (Array.isArray(latlngArray)) {
+          inside = latlngArray.some((latlng: L.LatLng) => {
+            return this.leafletMap.distance(latlng, L.latLng(lat, lng)) <= 0;
+          });
+        }
+        if (inside) break;
+      }
+
+      if (!inside) {
+        this.showToast('Boat has left the geofenced area!', 'danger');
+      }
+    }
   }
 
   initializeDarkPalette(isDark: boolean) {
@@ -393,6 +452,7 @@ export class NavigatePage implements OnInit {
     this.leafletMap.addLayer(this.markersGroup);
     this.leafletMap.addLayer(this.linesGroup);
     this.leafletMap.addLayer(this.boatLayer);
+    this.leafletMap.addLayer(this.geofenceLayer);
 
     const baseMaps = {
       "Base Map": baseLayer,

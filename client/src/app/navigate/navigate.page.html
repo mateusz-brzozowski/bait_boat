@@ -13,11 +13,11 @@
     </ion-toolbar>
   </ion-header>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-  crossorigin=""/>
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-  crossorigin=""></script>
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder@3.0.0/dist/leaflet-control-geocoder.css" />
   <script src="https://unpkg.com/leaflet-control-geocoder@3.0.0/dist/Control.Geocoder.js"></script>
   <div id="leafletMap"></div>
@@ -25,7 +25,8 @@
     <ion-button shape="round" id="locateButton" class="locate-button" color="secondary" (click)="locate()" size="large">
       <ion-icon slot="icon-only" name="locate"></ion-icon>
     </ion-button>
-    <ion-button shape="round" id="trashButton" class="remove-button" color="secondary" (click)="removeMarkers()" size="large">
+    <ion-button shape="round" id="trashButton" class="remove-button" color="secondary" (click)="removeMarkers()"
+      size="large">
       <ion-icon slot="icon-only" name="trash"></ion-icon>
     </ion-button>
     <ion-button shape="round" id="startPauseButton" class="start-pause-button" (click)="start()" size="large">
@@ -34,8 +35,13 @@
     <ion-button shape="round" class="emergency-button" color="danger" (click)="emergencyStop()" size="large">
       <ion-icon slot="icon-only" name="stop"></ion-icon>
     </ion-button>
-    <ion-button shape="round" id="routesButton" class="routes-button" color="primary" (click)="openRoutesModal()" size="large">
+    <ion-button shape="round" id="routesButton" class="routes-button" color="primary" (click)="openRoutesModal()"
+      size="large">
       <ion-icon slot="icon-only" name="map"></ion-icon>
+    </ion-button>
+    <ion-button shape="round" id="geofenceButton" class="geofence-button" color="tertiary" (click)="drawGeofence()"
+      size="large">
+      <ion-icon slot="icon-only" name="create"></ion-icon>
     </ion-button>
   </div>
 </ion-content>
