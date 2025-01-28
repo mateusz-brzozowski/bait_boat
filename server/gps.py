@@ -30,7 +30,7 @@ class GPS:
         self.average_data = average_data
         self.simulation = simulation
 
-        self.data: GPSData = GPSData(0, 0)
+        self.data: GPSData = GPSData(50.705548, 22.192485)
         if not self.simulation:
             self.serial: serial.Serial = serial.Serial(
                 port, baud_rate, timeout=1

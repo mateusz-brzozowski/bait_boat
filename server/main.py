@@ -9,6 +9,7 @@ from navigation import Navigation
 
 import threading
 import time
+import random
 
 app = Flask(__name__)
 CORS(app)
@@ -90,17 +91,49 @@ def send_navigation_data() -> None:
         time.sleep(1)
 
 
+def send_status_data() -> None:
+    while True:
+        battery_level = round(random.randint(0, 100), 2)
+        left_motor_temp = round(random.uniform(20.0, 100.0), 2)
+        right_motor_temp = round(random.uniform(20.0, 100.0), 2)
+        boat_speed = round(random.uniform(0, 50), 2)
+        distance_from_user = round(random.uniform(0, 1000), 2)
+        gps_signal_strength = round(random.uniform(0, 100), 2)
+        estimated_time_value = estimated_time = (battery_level / 100) * 60
+        estimated_time = f"{round(estimated_time_value, 2)} mins" 
+        boat_status = "Connected"
+        status = {
+            "batteryLevel": battery_level,
+            "leftMotorTemp": left_motor_temp,
+            "rightMotorTemp": right_motor_temp,
+            "boatSpeed": boat_speed,
+            "gpsSignalStrength": gps_signal_strength,
+            "distanceFromUser": distance_from_user,
+            "estimatedTime": estimated_time,
+            "boatStatus": boat_status
+        }
+        print(status)
+        socketio.emit("status_update", status, namespace="/")
+        time.sleep(5)
+
+
 if __name__ == "__main__":
     try:
         motors.start_keep_alive()
         navigation_thread = threading.Thread(target=send_navigation_data)
         navigation_thread.daemon = True
         navigation_thread.start()
+
+        status_thread = threading.Thread(target=send_status_data)
+        status_thread.daemon = True
+        status_thread.start()
+
         socketio.run(
             app, host="0.0.0.0", port=5000, allow_unsafe_werkzeug=True
         )
     finally:
         navigation_thread.join()
+        status_thread.join()
         gps.stop()
         motors.cleanup()
         motors.stop_keep_alive()

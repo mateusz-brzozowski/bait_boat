@@ -46,6 +46,7 @@ export class NavigatePage implements OnInit {
   private lastWaypoint: number = -1;
   private isDark: boolean = false;
   private isDrawControl: boolean = false;
+  private isOutsideGeofence: boolean = false;
   private drawControl = new L.Control.Draw({
     draw: {
       polygon: true,
@@ -118,6 +119,7 @@ export class NavigatePage implements OnInit {
   }
 
   private loadRoute(waypoints: any[]) {
+    this.emergencyStop();
     this.removeMarkers();
     waypoints.forEach(waypoint => {
       this.addMarker(waypoint.lat, waypoint.lng);
@@ -142,8 +144,7 @@ export class NavigatePage implements OnInit {
     });
   }
 
-  private disableButtons(disable: boolean) {
-    const buttonIds = ['trashButton', 'startPauseButton', 'emergency-button', 'routesButton'];
+  private disableButtons(disable: boolean, buttonIds: string[] = ['trashButton', 'startPauseButton', 'emergency-button', 'routesButton']) {
     buttonIds.forEach(id => {
       const button = document.getElementById(id);
       if (button) {
@@ -179,6 +180,7 @@ export class NavigatePage implements OnInit {
   
     if (polygons.length === 0) {
       console.log('No geofence zones available.');
+      this.isOutsideGeofence = false;
       return;
     }
   
@@ -190,7 +192,9 @@ export class NavigatePage implements OnInit {
       }
     }
   
+    this.isOutsideGeofence = !insideGeofence;
     if (!insideGeofence) {
+      this.emergencyStop();
       await this.showToast('The boat is outside the geofence!', 'danger');
     }
   }
@@ -267,6 +271,29 @@ export class NavigatePage implements OnInit {
       label.style.color = isDark ? 'white' : 'black';
     });
 
+    const drawControls = document.querySelectorAll('.leaflet-draw-toolbar a, .leaflet-draw-toolbar button');
+    drawControls.forEach((control) => {
+      const htmlElement = control as HTMLElement;
+      htmlElement.style.color = isDark ? 'white' : 'black';
+      htmlElement.style.backgroundColor = isDark ? '#333' : '#fff';
+      htmlElement.style.border = isDark ? '1px solid #555' : '1px solid #ccc';
+    });
+  
+    const drawPopups = document.querySelectorAll('.leaflet-draw-tooltip, .leaflet-draw-tooltip-single, .leaflet-draw-tooltip-draw');
+    drawPopups.forEach((popup) => {
+      const htmlElement = popup as HTMLElement;
+      htmlElement.style.backgroundColor = isDark ? '#333' : '#fff';
+      htmlElement.style.color = isDark ? 'white' : 'black';
+      htmlElement.style.border = isDark ? '1px solid #555' : '1px solid #ccc';
+    });
+  
+    const drawLayers = document.querySelectorAll('.leaflet-draw-layers');
+    drawLayers.forEach((layer) => {
+      const htmlElement = layer as HTMLElement;
+      htmlElement.style.backgroundColor = isDark ? '#333' : '#fff';
+      htmlElement.style.color = isDark ? 'white' : 'black';
+    });
+
     this.updateMarkers(isDark);
   }
 
@@ -298,7 +325,7 @@ export class NavigatePage implements OnInit {
     this.markers = [];
   }
 
-  start() {
+  async start() {
     if (this.isNavigating) {
       this.pauseNavigation();
       return;
@@ -306,6 +333,12 @@ export class NavigatePage implements OnInit {
 
     if (this.markers.length < 2) {
       this.showToast('Please add at least two markers', 'warning');
+      return;
+    }
+
+    await this.checkGeofence();
+    if (this.isOutsideGeofence) {
+      await this.showToast('Cannot start. The boat is outside the geofence!', 'danger');
       return;
     }
 
@@ -350,16 +383,7 @@ export class NavigatePage implements OnInit {
   }
 
   private updateTrashButtonState() {
-    const trashButton = document.getElementById('trashButton');
-    if (trashButton) {
-      if (this.isNavigating) {
-        trashButton.setAttribute('disabled', 'true');
-      } else {
-        trashButton.removeAttribute('disabled');
-      }
-    } else {
-      console.error('Trash button element not found');
-    }
+    this.disableButtons(this.isNavigating, ['trashButton', 'routesButton', 'geofenceButton']);
   }
 
   private addMarker(lat: number, lng: number) {
