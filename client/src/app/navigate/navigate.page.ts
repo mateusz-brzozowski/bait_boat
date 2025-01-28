@@ -6,6 +6,7 @@ import 'leaflet-draw';
 import 'leaflet-control-geocoder';
 import { DarkModeService } from '../services/dark-mode.service';
 import { RoutesModalComponent } from '../routes-modal/routes-modal.component';
+import * as turf from '@turf/turf';
 
 declare module 'leaflet' {
   namespace Control {
@@ -44,6 +45,20 @@ export class NavigatePage implements OnInit {
   private currentWaypoint: number = 0;
   private lastWaypoint: number = -1;
   private isDark: boolean = false;
+  private isDrawControl: boolean = false;
+  private drawControl = new L.Control.Draw({
+    draw: {
+      polygon: true,
+      polyline: false,
+      rectangle: false,
+      circle: false,
+      marker: false,
+      circlemarker: false
+    },
+    edit: {
+      featureGroup: this.geofenceLayer
+    }
+  });
 
   ngOnInit() {
     this.websocketService.listenForEvent('message').subscribe((response: any) => {
@@ -67,6 +82,10 @@ export class NavigatePage implements OnInit {
       this.initializeDarkPalette(isDark);
       this.isDark = isDark;
     });
+
+    setInterval(() => {
+      this.checkGeofence();
+    }, 5000);
 
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
     prefersDark.addEventListener('change', (mediaQuery) => this.initializeDarkPalette(mediaQuery.matches));
@@ -107,26 +126,15 @@ export class NavigatePage implements OnInit {
   }
 
   public drawGeofence() {
-    if (this.geofence) {
-      this.geofenceLayer.removeLayer(this.geofence);
+    if (this.isDrawControl) {
+      this.leafletMap.removeControl(this.drawControl);
+      this.disableButtons(false);
+      this.isDrawControl = false;
+      return;
     }
-
-    const drawControl = new L.Control.Draw({
-      draw: {
-        polygon: true,
-        polyline: false,
-        rectangle: false,
-        circle: false,
-        marker: false,
-        circlemarker: false
-      },
-      edit: {
-        featureGroup: this.geofenceLayer
-      }
-    });
-
-    this.leafletMap.addControl(drawControl);
-
+    this.isDrawControl = true;
+    this.disableButtons(true);
+    this.leafletMap.addControl(this.drawControl);
     this.leafletMap.on(L.Draw.Event.CREATED, (event: any) => {
       const layer = event.layer;
       this.geofenceLayer.addLayer(layer);
@@ -134,26 +142,70 @@ export class NavigatePage implements OnInit {
     });
   }
 
-  private checkGeofence(lat: number, lng: number) {
-    if (this.geofence) {
-      const latlngs = this.geofence.getLatLngs() as L.LatLng[][]; // Rzutowanie na odpowiedni typ
-      let inside = false;
-
-      for (const latlngArray of latlngs) {
-        if (Array.isArray(latlngArray)) {
-          inside = latlngArray.some((latlng: L.LatLng) => {
-            return this.leafletMap.distance(latlng, L.latLng(lat, lng)) <= 0;
-          });
+  private disableButtons(disable: boolean) {
+    const buttonIds = ['trashButton', 'startPauseButton', 'emergency-button', 'routesButton'];
+    buttonIds.forEach(id => {
+      const button = document.getElementById(id);
+      if (button) {
+        if (disable) {
+          button.setAttribute('disabled', 'true');
+        } else {
+          button.removeAttribute('disabled');
         }
-        if (inside) break;
+      } else {
+        console.error(`Button with id ${id} not found`);
       }
-
-      if (!inside) {
-        this.showToast('Boat has left the geofenced area!', 'danger');
-      }
-    }
+    });
   }
 
+  private async checkGeofence(): Promise<void> {
+    const boatPoint = turf.point([this.boatLng, this.boatLat]);
+  
+    const polygons: any[] = [];
+    this.geofenceLayer.eachLayer((layer) => {
+      if (layer instanceof L.Polygon) {
+        const latLngs = layer.getLatLngs();
+        const coordinates = this.flattenLatLngs(latLngs);
+        if (coordinates.length > 0 && (coordinates[0][0] !== coordinates[coordinates.length - 1][0] || coordinates[0][1] !== coordinates[coordinates.length - 1][1])) {
+          coordinates.push(coordinates[0]);
+        }
+        if (coordinates.length >= 4) {
+          polygons.push(turf.polygon([coordinates]));
+        } else {
+          console.error('Invalid polygon with less than 4 points:', coordinates);
+        }
+      }
+    });
+  
+    if (polygons.length === 0) {
+      console.log('No geofence zones available.');
+      return;
+    }
+  
+    let insideGeofence = false;
+    for (const polygon of polygons) {
+      if (turf.booleanPointInPolygon(boatPoint, polygon)) {
+        insideGeofence = true;
+        break;
+      }
+    }
+  
+    if (!insideGeofence) {
+      await this.showToast('The boat is outside the geofence!', 'danger');
+    }
+  }
+  
+  private flattenLatLngs(latLngs: any): number[][] {
+    const coordinates: number[][] = [];
+    latLngs.forEach((latLng: any) => {
+      if (Array.isArray(latLng)) {
+        coordinates.push(...this.flattenLatLngs(latLng));
+      } else {
+        coordinates.push([latLng.lng, latLng.lat]);
+      }
+    });
+    return coordinates;
+  }
   initializeDarkPalette(isDark: boolean) {
     console.log('Dark palette:', isDark);
     document.documentElement.classList.toggle('ion-palette-dark', isDark);
@@ -468,7 +520,7 @@ export class NavigatePage implements OnInit {
     this.addBoatMarker();
 
     this.leafletMap.on('click', (e: any) => {
-      if (this.markers.length < MARKERS_MAX && !this.isNavigating) {
+      if (this.markers.length < MARKERS_MAX && !this.isNavigating && !this.isDrawControl) {
         this.addMarker(e.latlng.lat, e.latlng.lng);
         this.drawArrows();
         return;
